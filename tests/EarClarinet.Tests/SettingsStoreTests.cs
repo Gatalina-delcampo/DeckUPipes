@@ -12,6 +12,21 @@ public class SettingsStoreTests
 
         Assert.Equal("Control+Alt+M", store.Settings.Hotkey);
         Assert.Equal(OverlaySide.Left, store.Settings.Side);
+        Assert.True(store.IsFirstRun);
+    }
+
+    [Fact]
+    public void Load_Marks_FirstRun_Only_When_File_Missing()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "settings.json");
+        var store = new SettingsStore(path);
+        store.Load();
+        Assert.True(store.IsFirstRun);
+        store.Save();
+
+        var reloaded = new SettingsStore(path);
+        reloaded.Load();
+        Assert.False(reloaded.IsFirstRun);
     }
 
     [Fact]

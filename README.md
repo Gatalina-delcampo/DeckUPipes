@@ -53,8 +53,12 @@ Requires the .NET 10 SDK on Windows 10/11.
 
 MIT — see [LICENSE](LICENSE).
 
-If EarClarinet it's handy, consider a tip :3 :
+If EarClarinet is useful to you, consider supporting its development:
 [ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
+
+> **Tip**: if the hotkey does not respond while a game or overlay runs as
+> administrator (e.g. League of Legends with Porofessor), launch EarClarinet as
+> administrator too.
 
 ---
 
@@ -113,5 +117,9 @@ Requiere el SDK de .NET 10 en Windows 10/11.
 
 MIT — ver [LICENSE](LICENSE).
 
-Si EarClarinet te resulta útil, considera apoyarme :3 :
+Si EarClarinet te resulta útil, considera apoyar su desarrollo:
 [ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
+
+> **Consejo**: si el atajo no responde mientras un juego o overlay corre como
+> administrador (p. ej. League of Legends con Porofesor), ejecuta EarClarinet
+> también como administrador.

@@ -22,3 +22,6 @@ TestResults/
 # OS
 Thumbs.db
 .DS_Store
+
+# Local agent context (not for the repo)
+AGENTS.md

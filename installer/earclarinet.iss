@@ -2,7 +2,9 @@
 ; Built by CI on tags (v*). Publish output is expected in dist/publish.
 
 #define MyAppName "EarClarinet"
-#define MyAppVersion "0.1.0"
+#ifndef MyAppVersion
+#define MyAppVersion "0.1.2"
+#endif
 #define MyAppPublisher "gatacampestre"
 #define MyAppExeName "EarClarinet.App.exe"
 #define MyAppId "{{4B2E1C6A-9D3F-4E7B-8A51-2C6D9E0F1A3B}}"

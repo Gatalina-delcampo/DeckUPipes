@@ -36,6 +36,14 @@
                    HorizontalAlignment="Center"
                    Margin="0,10,0,0" />
 
+        <TextBlock Text="Tip: if the hotkey does not respond while a game or overlay
+runs as administrator, launch EarClarinet as administrator too."
+                   FontSize="11"
+                   Foreground="{DynamicResource DimTextBrush}"
+                   TextWrapping="Wrap"
+                   HorizontalAlignment="Center"
+                   Margin="0,8,0,0" />
+
         <TextBlock Text="MIT License — EarClarinet contributors"
                    FontSize="11"
                    Foreground="{DynamicResource DimTextBrush}"

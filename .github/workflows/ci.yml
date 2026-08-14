@@ -11,6 +11,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -47,6 +49,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/download-artifact@v4
         with:
@@ -62,7 +66,8 @@ jobs:
         run: |
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { throw "ISCC not found at $iscc" }
-          & $iscc "installer\earclarinet.iss"
+          $ver = (git describe --tags --abbrev=0) -replace '^v', ''
+          & $iscc "/DMyAppVersion=$ver" "installer\earclarinet.iss"
 
       - name: Upload installer
         uses: actions/upload-artifact@v4

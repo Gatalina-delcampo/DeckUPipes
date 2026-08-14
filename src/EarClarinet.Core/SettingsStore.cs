@@ -15,6 +15,9 @@ public sealed class SettingsStore
 
     public string FilePath { get; }
 
+    /// <summary>True when no settings file existed at load time (fresh install).</summary>
+    public bool IsFirstRun { get; private set; }
+
     public event EventHandler? SettingsChanged;
 
     public SettingsStore(string? filePath = null)
@@ -28,6 +31,7 @@ public sealed class SettingsStore
 
     public void Load()
     {
+        IsFirstRun = !File.Exists(FilePath);
         try
         {
             if (File.Exists(FilePath))

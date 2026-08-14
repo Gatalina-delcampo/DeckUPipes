@@ -17,9 +17,27 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.0</Version>
-    <InformationalVersion>0.1.0</InformationalVersion>
     <ApplicationIcon>Assets\logowo.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!--
+    Version is derived from the nearest git tag (e.g. v0.1.2 -> 0.1.2, or
+    0.1.2-dev when there are commits past the tag). Single source of truth:
+    About/Settings read the assembly version, so nothing needs a manual bump.
+  -->
+  <Target Name="SetVersionFromGit" BeforeTargets="PrepareForBuild">
+    <Exec Command="git describe --tags --abbrev=0 --always" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="Low" Condition="'$(LastGitTag)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="LastGitTag" />
+    </Exec>
+    <Exec Command="git describe --tags --long --always" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="Low" Condition="'$(GitDescribeLong)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitDescribeLong" />
+    </Exec>
+    <PropertyGroup Condition="'$(LastGitTag)' != '' and '$(GitDescribeLong)' != '$(LastGitTag)'">
+      <VersionSuffix>-dev</VersionSuffix>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(LastGitTag)' != ''">
+      <Version>$(LastGitTag.TrimStart('v'))$(VersionSuffix)</Version>
+    </PropertyGroup>
+  </Target>
 
 </Project>

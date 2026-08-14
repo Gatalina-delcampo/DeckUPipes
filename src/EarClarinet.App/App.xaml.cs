@@ -68,9 +68,18 @@ public partial class App : System.Windows.Application
         _registeredHotkeySpec = _settingsStore.Settings.Hotkey;
         _lastAutostart = _settingsStore.Settings.LaunchAtStartup;
 
+        // First run: tell the user the app is alive and guide them to the
+        // configuration (hotkey, position, theme).
+        var smoke = e.Args.Any(a => a.Equals("--smoke-test", StringComparison.OrdinalIgnoreCase));
+        if (_settingsStore.IsFirstRun && !smoke)
+        {
+            _trayIcon.ShowBalloon("EarClarinet is running", "Configure your hotkey and preferences.");
+            OnSettingsRequested();
+        }
+
         _overlayWindow.Reposition();
 
-        if (e.Args.Any(a => a.Equals("--smoke-test", StringComparison.OrdinalIgnoreCase)))
+        if (smoke)
         {
             RunSmokeTest();
         }
