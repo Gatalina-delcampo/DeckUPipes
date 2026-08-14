@@ -5,10 +5,10 @@
 #define MyAppVersion "0.1.0"
 #define MyAppPublisher "gatacampestre"
 #define MyAppExeName "EarClarinet.App.exe"
-#define MyAppId "4B2E1C6A-9D3F-4E7B-8A51-2C6D9E0F1A3B"
+#define MyAppId "{{4B2E1C6A-9D3F-4E7B-8A51-2C6D9E0F1A3B}}"
 
 [Setup]
-AppId={{#MyAppId}
+AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
