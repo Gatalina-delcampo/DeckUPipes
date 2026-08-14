@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EarClarinet.App/EarClarinet.App.csproj" />
+    <Project Path="src/EarClarinet.Core/EarClarinet.Core.csproj" />
+    <Project Path="src/EarClarinet.Interop/EarClarinet.Interop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EarClarinet.Tests/EarClarinet.Tests.csproj" />
+  </Folder>
+</Solution>

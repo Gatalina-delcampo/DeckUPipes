@@ -1,0 +1,22 @@
+﻿<Application x:Class="EarClarinet.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <!-- Themed brushes: values are replaced at runtime by ThemeManager.
+             Consumers must use DynamicResource so changes apply instantly. -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF4EC9B0" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#FF1C1C22" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#44FFFFFF" />
+        <SolidColorBrush x:Key="AppBoxBrush" Color="#F523232B" />
+        <SolidColorBrush x:Key="AppBoxBorderBrush" Color="#1AFFFFFF" />
+        <SolidColorBrush x:Key="TextBrush" Color="#FFE8E8EC" />
+        <SolidColorBrush x:Key="DimTextBrush" Color="#AAE8E8EC" />
+        <SolidColorBrush x:Key="TrackBrush" Color="#2EFFFFFF" />
+        <SolidColorBrush x:Key="HeaderHintBrush" Color="#FF3E3E4A" />
+        <SolidColorBrush x:Key="InputBrush" Color="#FF14141A" />
+        <SolidColorBrush x:Key="InputBorderBrush" Color="#33FFFFFF" />
+        <SolidColorBrush x:Key="EscChipBrush" Color="#3DFFFFFF" />
+        <SolidColorBrush x:Key="EscChipBorderBrush" Color="#66FFFFFF" />
+        <SolidColorBrush x:Key="MuteBrush" Color="#FFFF5F6B" />
+    </Application.Resources>
+</Application>

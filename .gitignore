@@ -1,0 +1,24 @@
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+artifacts/
+dist/
+*.nupkg
+
+# Test results
+TestResults/
+*.trx
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store

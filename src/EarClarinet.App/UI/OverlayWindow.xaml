@@ -1,0 +1,382 @@
+<Window x:Class="EarClarinet.App.UI.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EarClarinet"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Width="340"
+        SizeToContent="Height"
+        Focusable="True"
+        PreviewKeyDown="OnWindowPreviewKeyDown"
+        MouseWheel="OnOverlayMouseWheel"
+        MouseMove="OnWindowMouseMove"
+        MouseUp="OnWindowMouseUp">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- App box: floating per-app panel. Focused = full opacity + accent border;
+             TAB chip marks the next cycle target, ESC chip the focused box.
+             The chip column has a FIXED width so the layout never shifts when
+             chips appear/disappear while cycling. -->
+        <DataTemplate x:Key="AppBoxTemplate">
+            <Border CornerRadius="10"
+                    Margin="0,3"
+                    Padding="10,6"
+                    Background="{DynamicResource AppBoxBrush}"
+                    BorderThickness="1"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="FocusShake" />
+                </Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="{DynamicResource AppBoxBorderBrush}" />
+                        <Setter Property="Opacity" Value="{DynamicResource DimOpacity}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFocused}" Value="True">
+                                <Setter Property="Opacity" Value="1" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="104" />
+                        <ColumnDefinition Width="38" />
+                        <ColumnDefinition Width="56" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <Image Source="{Binding Icon}"
+                               Width="28"
+                               Height="28"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               VerticalAlignment="Center">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                            <Setter Property="Opacity" Value="0.45" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                    </Grid>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DisplayName}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="120"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextBrush}"
+                               Margin="0,0,8,0" />
+
+                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" Height="8" />
+                        <Border CornerRadius="4"
+                                Height="8"
+                                HorizontalAlignment="Stretch"
+                                RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="{Binding Volume, Mode=OneWay}" />
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource MuteBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                    </Grid>
+
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding VolumeText}"
+                               TextAlignment="Right"
+                               VerticalAlignment="Center"
+                               FontSize="11"
+                               Foreground="{DynamicResource DimTextBrush}" />
+
+                    <StackPanel Grid.Column="4"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <Border CornerRadius="4"
+                                Background="{DynamicResource AccentBrush}"
+                                Padding="5,2"
+                                Visibility="{Binding IsNextTabTarget, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="TAB"
+                                       FontSize="8"
+                                       FontWeight="Bold"
+                                       Foreground="#FF0C1C19" />
+                        </Border>
+                        <Border CornerRadius="4"
+                                Background="{DynamicResource EscChipBrush}"
+                                BorderBrush="{DynamicResource EscChipBorderBrush}"
+                                BorderThickness="1"
+                                Padding="5,2"
+                                Margin="4,0,0,0"
+                                Visibility="{Binding IsMuteHint, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="M"
+                                       FontSize="8"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextBrush}" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Used by the open animation (fade + slide). -->
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="OverlaySlide" />
+        </Grid.RenderTransform>
+
+        <ScrollViewer x:Name="SessionScroll"
+                      VerticalScrollBarVisibility="Hidden"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False">
+            <StackPanel x:Name="RootStack" HorizontalAlignment="Center">
+                <!-- Main panel: header + SYSTEM row. SYSTEM participates in the TAB cycle. -->
+                <Border x:Name="SystemPanelBorder"
+                        CornerRadius="14"
+                        Background="{DynamicResource PanelBrush}"
+                        BorderBrush="{DynamicResource PanelBorderBrush}"
+                        BorderThickness="1"
+                        Padding="14,10"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="SystemShake" />
+                    </Border.RenderTransform>
+                    <StackPanel>
+                        <!-- Header: centered title, close button at the top-right. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal">
+                                <Image x:Name="HeaderLogo"
+                                       Height="14"
+                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Visibility="Collapsed" />
+                                <TextBlock Text="EarClarinet"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Border x:Name="CloseButton"
+                                    Grid.Column="2"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Padding="5,1"
+                                    Cursor="Hand"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    MouseLeftButtonDown="OnCloseClicked">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Opacity" Value="1" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.8" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="&#x2715;"
+                                           FontSize="9"
+                                           FontWeight="Bold"
+                                           Foreground="#FF0C1C19" />
+                            </Border>
+                        </Grid>
+                        <TextBlock x:Name="CloseHint"
+                                   Text="close with Control+Alt+M"
+                                   FontSize="9"
+                                   Foreground="{DynamicResource HeaderHintBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,3,0,0" />
+                        <!-- SYSTEM row, inline label (vertical column mode). -->
+                        <Grid x:Name="SystemRowInline"
+                              Height="34"
+                              Margin="0,8,0,0"
+                              Background="Transparent"
+                              MouseWheel="OnSystemMouseWheel"
+                              MouseLeftButtonDown="OnSystemMouseDown">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="64" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="38" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="MasterLabel"
+                                       Grid.Column="0"
+                                       Text="SYSTEM"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource DimTextBrush}"
+                                       VerticalAlignment="Center" />
+
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" Height="8" />
+                                <Border x:Name="MasterVolumeFill"
+                                        Background="{DynamicResource AccentBrush}"
+                                        CornerRadius="4"
+                                        Height="8"
+                                        HorizontalAlignment="Stretch"
+                                        RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="MasterVolumeScale" ScaleX="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <Border x:Name="MasterPeakFill"
+                                        Background="#66FFFFFF"
+                                        CornerRadius="4"
+                                        Height="8"
+                                        HorizontalAlignment="Stretch"
+                                        RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="MasterPeakScale" ScaleX="0" />
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock x:Name="MasterVolumeText"
+                                       Grid.Column="2"
+                                       TextAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource DimTextBrush}" />
+
+                            <Border x:Name="SystemTabChip"
+                                    Grid.Column="3"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Padding="5,2"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed">
+                                <TextBlock Text="TAB"
+                                           FontSize="8"
+                                           FontWeight="Bold"
+                                           Foreground="#FF0C1C19" />
+                            </Border>
+                        </Grid>
+
+                        <!-- SYSTEM block, label ABOVE the bar (horizontal dock mode). -->
+                        <Grid x:Name="SystemRowStacked"
+                              Height="52"
+                              Margin="0,8,0,0"
+                              Background="Transparent"
+                              MouseWheel="OnSystemMouseWheel"
+                              MouseLeftButtonDown="OnSystemMouseDown"
+                              Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="38" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="MasterLabelTop"
+                                       Grid.Row="0"
+                                       Text="SYSTEM"
+                                       FontSize="9"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource DimTextBrush}"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center" />
+
+                            <Grid Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">
+                                <Border Background="{DynamicResource TrackBrush}" CornerRadius="4" Height="8" />
+                                <Border x:Name="MasterVolumeFillTop"
+                                        Background="{DynamicResource AccentBrush}"
+                                        CornerRadius="4"
+                                        Height="8"
+                                        HorizontalAlignment="Stretch"
+                                        RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="MasterVolumeScaleTop" ScaleX="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <Border x:Name="MasterPeakFillTop"
+                                        Background="#66FFFFFF"
+                                        CornerRadius="4"
+                                        Height="8"
+                                        HorizontalAlignment="Stretch"
+                                        RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="MasterPeakScaleTop" ScaleX="0" />
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock x:Name="MasterVolumeTextTop"
+                                       Grid.Row="1"
+                                       Grid.Column="1"
+                                       TextAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource DimTextBrush}" />
+
+                            <Border x:Name="SystemTabChipTop"
+                                    Grid.Row="1"
+                                    Grid.Column="2"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Padding="5,2"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed">
+                                <TextBlock Text="TAB"
+                                           FontSize="8"
+                                           FontWeight="Bold"
+                                           Foreground="#FF0C1C19" />
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <ItemsControl x:Name="SessionList"
+                              Margin="0,8,0,0"
+                              VerticalAlignment="Center"
+                              ItemTemplate="{StaticResource AppBoxTemplate}"
+                              Focusable="False"
+                              MouseWheel="OnSessionListMouseWheel"
+                              MouseLeftButtonDown="OnSessionListMouseDown" />
+
+                <TextBlock x:Name="EmptyState"
+                           Text="No audio apps detected yet.&#x0a;Press the hotkey again to hide."
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource DimTextBrush}"
+                           Margin="0,12,0,4"
+                           Visibility="Collapsed" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
