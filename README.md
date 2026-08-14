@@ -1,3 +1,5 @@
+Project made for fun and testing of DSv4.
+
 # EarClarinet
 
 A per-app volume mixer for Windows. Press a hotkey and a compact mixer appears
@@ -51,7 +53,7 @@ Requires the .NET 10 SDK on Windows 10/11.
 
 MIT — see [LICENSE](LICENSE).
 
-If EarClarinet is useful to you, consider supporting its development:
+If EarClarinet it's handy, consider a tip :3 :
 [ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
 
 ---
@@ -111,5 +113,5 @@ Requiere el SDK de .NET 10 en Windows 10/11.
 
 MIT — ver [LICENSE](LICENSE).
 
-Si EarClarinet te resulta útil, considera apoyar su desarrollo:
+Si EarClarinet te resulta útil, considera apoyarme :3 :
 [ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
