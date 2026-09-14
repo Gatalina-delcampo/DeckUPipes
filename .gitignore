@@ -23,5 +23,9 @@ TestResults/
 Thumbs.db
 .DS_Store
 
+# Local scratch: screenshots dropped in the project root
+/screenshot*.png
+/Screenshot*.png
+
 # Local agent context (not for the repo)
 AGENTS.md
