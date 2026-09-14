@@ -1,0 +1,276 @@
+﻿<Window x:Class="DeckUPipes.App.UI.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeckUPipes"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Width="840"
+        SizeToContent="Height"
+        UseLayoutRounding="True"
+        Focusable="True"
+        PreviewKeyDown="OnWindowPreviewKeyDown"
+        MouseWheel="OnOverlayMouseWheel"
+        MouseMove="OnWindowMouseMove"
+        MouseUp="OnWindowMouseUp">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <DataTemplate x:Key="VolumeSegmentTemplate">
+            <Grid Width="48"
+                  Height="48"
+                  Margin="0,0,2,0"
+                  IsHitTestVisible="False">
+                <Border Background="{DynamicResource SkinVolumeSegmentBrush}"
+                        Opacity="{Binding Opacity}" />
+                <Image Source="{Binding Image}"
+                       Stretch="Fill"
+                       SnapsToDevicePixels="True"
+                       Opacity="{Binding Opacity}" />
+            </Grid>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="HorizontalSegmentPanel">
+            <StackPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+
+        <DataTemplate x:Key="AppBoxTemplate">
+            <Border Width="756"
+                    Height="90"
+                    Padding="0"
+                    Background="{DynamicResource SkinProgramBackgroundBrush}"
+                    BorderBrush="{DynamicResource AppBoxBorderBrush}"
+                    BorderThickness="1"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="FocusShake" />
+                </Border.RenderTransform>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Opacity" Value="{DynamicResource DimOpacity}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFocused}" Value="True">
+                                <Setter Property="Opacity" Value="1" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Canvas Width="756" Height="90">
+                    <Grid Canvas.Left="10"
+                          Canvas.Top="3"
+                          Width="84"
+                          Height="84"
+                          Opacity="{Binding IconOpacity}"
+                          IsHitTestVisible="False">
+                        <Image Source="{Binding SkinIcon}" Stretch="Fill" />
+                        <Image Width="64"
+                               Height="64"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Source="{Binding Icon}"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="{Binding IconScalingMode}" />
+                    </Grid>
+                    <TextBlock Canvas.Left="128"
+                               Canvas.Top="2"
+                               Width="470"
+                               Height="16"
+                               Text="{Binding DisplayName}"
+                               TextTrimming="CharacterEllipsis"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextBrush}"
+                               IsHitTestVisible="False" />
+                    <TextBlock Canvas.Left="578"
+                               Canvas.Top="2"
+                               Width="92"
+                               Height="16"
+                               Text="{Binding VolumeText}"
+                               TextAlignment="Right"
+                               FontSize="11"
+                               Foreground="{DynamicResource DimTextBrush}"
+                               IsHitTestVisible="False" />
+                    <Border Canvas.Left="128"
+                            Canvas.Top="15"
+                            Width="520"
+                            Height="60"
+                            Background="{DynamicResource SkinVolumeBackgroundBrush}"
+                            IsHitTestVisible="False" />
+                    <ItemsControl Canvas.Left="140"
+                                  Canvas.Top="21"
+                                  Width="500"
+                                  Height="48"
+                                  ItemsSource="{Binding VolumeSegments}"
+                                  ItemTemplate="{StaticResource VolumeSegmentTemplate}"
+                                  ItemsPanel="{StaticResource HorizontalSegmentPanel}"
+                                  IsHitTestVisible="False" />
+                    <Border Canvas.Left="678"
+                            Canvas.Top="11"
+                            Width="68"
+                            Height="68"
+                            Background="{DynamicResource MuteBrush}"
+                            Opacity="{Binding MuteOverlayOpacity}"
+                            IsHitTestVisible="False" />
+                    <Image Canvas.Left="678"
+                           Canvas.Top="11"
+                           Width="68"
+                           Height="68"
+                           Source="{DynamicResource SkinProgramMuteImage}"
+                           Stretch="Fill"
+                           SnapsToDevicePixels="True"
+                           IsHitTestVisible="False" />
+                </Canvas>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Width="840">
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="OverlaySlide" />
+        </Grid.RenderTransform>
+        <ScrollViewer x:Name="SessionScroll"
+                      Width="840"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False">
+            <StackPanel x:Name="RootStack" Width="840">
+                <Border x:Name="SystemPanelBorder"
+                        Width="840"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="0"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="SystemShake" />
+                    </Border.RenderTransform>
+                    <StackPanel>
+                        <Grid Height="34">
+                            <TextBlock Text="DeckUPipes"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock x:Name="CloseHint"
+                                   Text="close with Control+Alt+M"
+                                   FontSize="9"
+                                   Foreground="{DynamicResource HeaderHintBrush}"
+                                   HorizontalAlignment="Center" />
+                        <Canvas x:Name="SystemRowInline"
+                                Width="840"
+                                Height="144"
+                                Background="Transparent"
+                                MouseWheel="OnSystemMouseWheel"
+                                MouseLeftButtonDown="OnSystemMouseDown">
+                            <Border Canvas.Left="42"
+                                    Width="756"
+                                    Height="144"
+                                    Background="{DynamicResource SkinGlobalBackgroundBrush}"
+                                    IsHitTestVisible="False" />
+                            <Image x:Name="MasterAvatarImage"
+                                   Canvas.Left="42"
+                                   Canvas.Top="8"
+                                   Width="124"
+                                   Height="124"
+                                   Stretch="Fill"
+                                   IsHitTestVisible="False" />
+                            <TextBlock x:Name="MasterLabel"
+                                       Canvas.Left="170"
+                                       Canvas.Top="2"
+                                       Width="500"
+                                       Text="SYSTEM"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource DimTextBrush}"
+                                       IsHitTestVisible="False" />
+                            <TextBlock x:Name="MasterVolumeText"
+                                       Canvas.Left="620"
+                                       Canvas.Top="2"
+                                       Width="62"
+                                       TextAlignment="Right"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource DimTextBrush}"
+                                       IsHitTestVisible="False" />
+                            <Border Canvas.Left="180"
+                                    Canvas.Top="40"
+                                    Width="520"
+                                    Height="60"
+                                    Background="{DynamicResource SkinVolumeBackgroundBrush}"
+                                    IsHitTestVisible="False" />
+                            <ItemsControl x:Name="MasterVolumeSegments"
+                                          Canvas.Left="192"
+                                          Canvas.Top="46"
+                                          Width="500"
+                                          Height="48"
+                                          ItemTemplate="{StaticResource VolumeSegmentTemplate}"
+                                          ItemsPanel="{StaticResource HorizontalSegmentPanel}"
+                                          IsHitTestVisible="False" />
+                            <Border x:Name="MasterMuteFallback"
+                                    Canvas.Left="690"
+                                    Canvas.Top="8"
+                                    Width="108"
+                                    Height="108"
+                                    Background="{DynamicResource MuteBrush}"
+                                    Opacity="0.35"
+                                    IsHitTestVisible="False">
+                                <TextBlock Text="SPEAKER"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextBrush}" />
+                            </Border>
+                            <Image x:Name="MasterMuteImage"
+                                   Canvas.Left="690"
+                                   Canvas.Top="8"
+                                   Width="108"
+                                   Height="108"
+                                   Stretch="Fill"
+                                   IsHitTestVisible="False"
+                                   Visibility="Collapsed" />
+                        </Canvas>
+                    </StackPanel>
+                </Border>
+                <Grid x:Name="ProgramStackSurface"
+                      Width="840"
+                      Margin="0,0,0,0">
+                    <Border x:Name="ConnectorSurface"
+                            Width="756"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Background="{DynamicResource SkinConnectorBrush}"
+                            IsHitTestVisible="False" />
+                    <StackPanel>
+                        <ItemsControl x:Name="SessionList"
+                                      Width="756"
+                                      Margin="42,30,42,0"
+                                      ItemTemplate="{StaticResource AppBoxTemplate}"
+                                      Focusable="False"
+                                      MouseWheel="OnSessionListMouseWheel"
+                                      MouseLeftButtonDown="OnSessionListMouseDown" />
+                        <Border x:Name="TerminationSurface"
+                                Width="756"
+                                Height="42"
+                                Margin="42,18,42,0"
+                                Background="{DynamicResource SkinTerminationBrush}"
+                                IsHitTestVisible="False" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock x:Name="EmptyState"
+                           Text="No audio apps detected yet.&#x0a;Press the hotkey again to hide."
+                           Width="756"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource DimTextBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,12,0,4"
+                           Visibility="Collapsed" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
+

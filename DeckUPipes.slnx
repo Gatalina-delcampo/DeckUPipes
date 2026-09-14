@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DeckUPipes.App/DeckUPipes.App.csproj" />
+    <Project Path="src/DeckUPipes.Core/DeckUPipes.Core.csproj" />
+    <Project Path="src/DeckUPipes.Interop/DeckUPipes.Interop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeckUPipes.Tests/DeckUPipes.Tests.csproj" />
+  </Folder>
+</Solution>
+

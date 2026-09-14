@@ -1,0 +1,388 @@
+﻿<Window x:Class="DeckUPipes.App.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeckUPipes Settings"
+        Width="440"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{DynamicResource PanelBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        AllowDrop="True"
+        DragOver="OnWindowDragOver"
+        Drop="OnWindowDrop"
+        PreviewKeyDown="OnWindowPreviewKeyDown">
+    <Window.Resources>
+        <!-- Dropdown items must use the theme's text brush; the default is
+             near-white on a white popup, which is unreadable. -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                Padding="8,5">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                              ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="#FF111722" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The default ComboBox template paints its own light field and ignores
+             Background, which left the selected text unreadable in dark theme.
+             This one follows the theme brushes and shows SelectionBoxItem, so
+             DisplayMemberPath applies to the closed box as well as the popup. -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="DropDownToggle"
+                                          Focusable="False"
+                                          ClickMode="Press"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+                                            <Path HorizontalAlignment="Right"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,9,0"
+                                                  Data="M0,0 L4,4 L8,0"
+                                                  Stroke="{DynamicResource TextBrush}"
+                                                  StrokeThickness="1.4"
+                                                  IsHitTestVisible="False" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Margin="9,0,28,0"
+                                              VerticalAlignment="Center"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border Background="{DynamicResource PanelBrush}"
+                                        BorderBrush="{DynamicResource InputBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="0,2,0,0"
+                                        MinWidth="{TemplateBinding ActualWidth}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer>
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Buttons follow the theme instead of the default light chrome. -->
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="#FF111722" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="700">
+        <StackPanel Margin="24,20">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <Image x:Name="HeaderLogo"
+                       Height="20"
+                       Margin="0,0,8,0"
+                       VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Visibility="Collapsed" />
+                <TextBlock Text="DeckUPipes Settings"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource AccentBrush}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock Text="Appearance"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <RadioButton x:Name="DarkThemeRadio"
+                             Content="Dark"
+                             GroupName="Theme"
+                             Checked="OnThemeChanged"
+                             Foreground="{DynamicResource TextBrush}" />
+                <RadioButton x:Name="LightThemeRadio"
+                             Content="Light"
+                             GroupName="Theme"
+                             Margin="24,0,0,0"
+                             Checked="OnThemeChanged"
+                             Foreground="{DynamicResource TextBrush}" />
+            </StackPanel>
+
+            <TextBlock Text="Skin"
+                       FontWeight="SemiBold"
+                       Margin="0,16,0,4" />
+            <ComboBox x:Name="SkinCombo"
+                      DisplayMemberPath="DisplayName"
+                      SelectedValuePath="Id"
+                      SelectionChanged="OnSkinChanged"
+                      Background="{DynamicResource InputBrush}"
+                      BorderBrush="{DynamicResource InputBorderBrush}"
+                      Foreground="{DynamicResource TextBrush}" />
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Button x:Name="LoadSkinButton"
+                        Content="Load skin..."
+                        Click="OnLoadSkinClicked" />
+                <Button x:Name="LoadFolderButton"
+                        Content="Folder..."
+                        Margin="8,0,0,0"
+                        ToolTip="Load a skin from an unpacked folder"
+                        Click="OnLoadFolderClicked" />
+                <Button x:Name="RemoveSkinButton"
+                        Content="Remove..."
+                        Margin="8,0,0,0"
+                        IsEnabled="False"
+                        ToolTip="Delete the selected skin from this computer"
+                        Click="OnRemoveSkinClicked" />
+            </StackPanel>
+            <TextBlock x:Name="SkinStatus"
+                       FontSize="11"
+                       Foreground="{DynamicResource DimTextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,6,0,8" />
+            <Border x:Name="SkinCard"
+                    Visibility="Collapsed"
+                    Background="{DynamicResource InputBrush}"
+                    BorderBrush="{DynamicResource InputBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock x:Name="SkinCardTitle"
+                               TextWrapping="Wrap"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}" />
+                    <TextBlock x:Name="SkinCardDetail"
+                               TextWrapping="Wrap"
+                               FontSize="11"
+                               Foreground="{DynamicResource DimTextBrush}"
+                               Margin="0,4,0,0" />
+                    <TextBlock x:Name="SkinCardIssues"
+                               TextWrapping="Wrap"
+                               FontSize="11"
+                               Margin="0,6,0,0"
+                               Visibility="Collapsed" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button x:Name="SkinCardPrimary" Click="OnSkinCardPrimaryClicked" />
+                        <Button x:Name="SkinCardCancel"
+                                Content="Cancel"
+                                Margin="8,0,0,0"
+                                Click="OnSkinCardCancelClicked" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Accent color"
+                       FontWeight="SemiBold"
+                       Margin="0,10,0,4" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="AccentTeal" GroupName="Accent" Tag="#FF4EC9B0" Checked="OnAccentChanged" ToolTip="Teal">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FF4EC9B0" />
+                </RadioButton>
+                <RadioButton x:Name="AccentBlue" GroupName="Accent" Tag="#FF4E8DF7" Checked="OnAccentChanged" ToolTip="Blue" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FF4E8DF7" />
+                </RadioButton>
+                <RadioButton x:Name="AccentPurple" GroupName="Accent" Tag="#FF9B6DF5" Checked="OnAccentChanged" ToolTip="Purple" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FF9B6DF5" />
+                </RadioButton>
+                <RadioButton x:Name="AccentPink" GroupName="Accent" Tag="#FFF56DA8" Checked="OnAccentChanged" ToolTip="Pink" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FFF56DA8" />
+                </RadioButton>
+                <RadioButton x:Name="AccentOrange" GroupName="Accent" Tag="#FFF59E4E" Checked="OnAccentChanged" ToolTip="Orange" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FFF59E4E" />
+                </RadioButton>
+                <RadioButton x:Name="AccentGreen" GroupName="Accent" Tag="#FF6DC85A" Checked="OnAccentChanged" ToolTip="Green" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FF6DC85A" />
+                </RadioButton>
+                <RadioButton x:Name="AccentRed" GroupName="Accent" Tag="#FFF5605A" Checked="OnAccentChanged" ToolTip="Red" Margin="10,0,0,0">
+                    <Rectangle Width="18" Height="18" RadiusX="9" RadiusY="9" Fill="#FFF5605A" />
+                </RadioButton>
+            </StackPanel>
+
+            <TextBlock Text="Global Hotkey"
+                       FontWeight="SemiBold"
+                       Margin="0,16,0,4" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="HotkeyBox"
+                         Grid.Column="0"
+                         FontSize="14"
+                         IsReadOnly="True"
+                         Padding="6,4"
+                         Background="{DynamicResource InputBrush}"
+                         BorderBrush="{DynamicResource InputBorderBrush}"
+                         Foreground="{DynamicResource TextBrush}"
+                         GotKeyboardFocus="OnHotkeyBoxGotFocus"
+                         LostKeyboardFocus="OnHotkeyBoxLostFocus"
+                         PreviewKeyDown="OnHotkeyBoxPreviewKeyDown" />
+                <Button x:Name="ClearHotkeyButton"
+                        Grid.Column="1"
+                        Content="Clear"
+                        Margin="8,0,0,0"
+                        Padding="10,4"
+                        Click="OnClearHotkeyClicked"
+                        Background="{DynamicResource InputBrush}"
+                        BorderBrush="{DynamicResource InputBorderBrush}"
+                        Foreground="{DynamicResource TextBrush}" />
+            </Grid>
+            <TextBlock x:Name="HotkeyHint"
+                       Text="Click the box and press a key combination (e.g. Ctrl+Alt+M)."
+                       FontSize="11"
+                       Foreground="{DynamicResource DimTextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,16" />
+
+            <TextBlock Text="Position"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <RadioButton x:Name="SideTopLeft" Content="Top left" GroupName="Side" Tag="TopLeft" Checked="OnSideChanged" Foreground="{DynamicResource TextBrush}" />
+                <RadioButton x:Name="SideTopRight" Content="Top right" GroupName="Side" Tag="TopRight" Checked="OnSideChanged" Foreground="{DynamicResource TextBrush}" Margin="24,0,0,0" />
+            </StackPanel>
+
+            <TextBlock Text="Distance from screen edge"
+                       FontWeight="SemiBold"
+                       Margin="0,10,0,2" />
+            <Slider x:Name="EdgeOffsetSlider"
+                    Minimum="0"
+                    Maximum="80"
+                    ValueChanged="OnEdgeOffsetChanged" />
+
+            <TextBlock Text="Overlay opacity"
+                       FontWeight="SemiBold"
+                       Margin="0,10,0,2" />
+            <Slider x:Name="FocusedOpacitySlider"
+                    Minimum="0.3"
+                    Maximum="1.0"
+                    SmallChange="0.05"
+                    LargeChange="0.1"
+                    ValueChanged="OnFocusedOpacityChanged" />
+
+            <TextBlock Text="Dimmed bars opacity"
+                       FontWeight="SemiBold"
+                       Margin="0,10,0,2" />
+            <Slider x:Name="DimOpacitySlider"
+                    Minimum="0.05"
+                    Maximum="0.9"
+                    SmallChange="0.05"
+                    LargeChange="0.1"
+                    ValueChanged="OnDimOpacityChanged" />
+
+            <TextBlock Text="Monitor"
+                       FontWeight="SemiBold"
+                       Margin="0,14,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <RadioButton x:Name="MonitorCursorRadio"
+                             Content="Monitor with cursor"
+                             GroupName="Monitor"
+                             Checked="OnMonitorModeChanged"
+                             Foreground="{DynamicResource TextBrush}" />
+                <RadioButton x:Name="MonitorFixedRadio"
+                             Content="Fixed monitor"
+                             GroupName="Monitor"
+                             Margin="24,0,0,0"
+                             Checked="OnMonitorModeChanged"
+                             Foreground="{DynamicResource TextBrush}" />
+            </StackPanel>
+            <ComboBox x:Name="MonitorsCombo"
+                      Margin="0,0,0,4"
+                      Background="{DynamicResource InputBrush}"
+                      BorderBrush="{DynamicResource InputBorderBrush}"
+                      Foreground="{DynamicResource TextBrush}"
+                      SelectionChanged="OnMonitorsComboChanged" />
+
+            <CheckBox x:Name="LaunchAtStartupCheck"
+                      Content="Launch DeckUPipes with Windows"
+                      Margin="0,10,0,0"
+                      Checked="OnLaunchAtStartupChanged"
+                      Unchecked="OnLaunchAtStartupChanged"
+                      Foreground="{DynamicResource TextBrush}" />
+
+            <TextBlock x:Name="VersionFooter"
+                       FontSize="10"
+                       Foreground="{DynamicResource DimTextBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,20,0,0" />
+        </StackPanel>
+    </ScrollViewer>
+</Window>
+

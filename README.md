@@ -1,16 +1,15 @@
 Project made for fun and testing of DSv4.
 
-# EarClarinet
+# DeckUPipes
 
 A per-app volume mixer for Windows. Press a hotkey and a compact mixer appears
-at any edge of your screen: adjust each app's volume independently, mute
-anything with one click, and see which app is playing audio.
+in the top-left or top-right corner of the screen: adjust each app's volume
+independently, mute anything with one click, and see which app is playing audio.
 
 ## Features
 
 - Per-app volume and mute via the Windows Core Audio API (no extra services)
-- Overlay in **8 positions**: left/right vertical column, or a horizontal dock
-  at top/bottom left, center or right
+- Overlay anchored to the **top-left or top-right** corner of the screen, as one consistent vertical composition
 - System volume row with live peak meter
 - TAB cycle between apps with visual hints (TAB / M chips, optional)
 - Configurable global hotkey (default `Ctrl+Alt+M`)
@@ -20,7 +19,7 @@ anything with one click, and see which app is playing audio.
 
 ## Usage
 
-1. Run EarClarinet (tray icon appears).
+1. Run DeckUPipes (tray icon appears).
 2. Press `Ctrl+Alt+M` to show/hide the mixer on the monitor where the cursor is.
 3. Hover a bar and use the **mouse wheel**, **drag horizontally**, or the keys.
 
@@ -37,27 +36,56 @@ anything with one click, and see which app is playing audio.
 ## Install
 
 Download the latest installer from
-[Releases](https://github.com/gatacampestre/EarClarinet/releases) (or run the
+[Releases](https://github.com/gatacampestre/DeckUPipes/releases) (or run the
 portable exe). The build is self-contained — no .NET runtime needed.
 
 ## Building
 
 ```powershell
-dotnet build EarClarinet.slnx -c Release
-dotnet test tests/EarClarinet.Tests/EarClarinet.Tests.csproj -c Release
+dotnet build DeckUPipes.slnx -c Release
+dotnet test tests/DeckUPipes.Tests/DeckUPipes.Tests.csproj -c Release
 ```
 
 Requires the .NET 10 SDK on Windows 10/11.
+
+## Skins
+
+DeckUPipes looks for per-user skin packages under:
+
+```text
+%APPDATA%\DeckUPipes\skins\<skin-id>\skin.json
+```
+
+It also reads legacy packages from `%APPDATA%\DeckUPipes\skins` during migration. Select a discovered skin from **Settings > Skin**. If the selected package is missing or invalid, DeckUPipes keeps using the built-in theme and reports the fallback in Settings.
+
+Install a skin from **Settings > Skin**: press **Load skin...** and pick a `.zip` package, or **Folder...** for an unpacked folder - or drag either one onto the window. A card shows the skin id, how many objects were found and every problem it found before anything is copied; **Install skin** (or **Replace**) then switches the overlay to it immediately, with no restart. **Remove...** deletes an installed skin.
+
+A package declares either `deckupipes-skin` or the pre-rename `earclarinet-skin`; both are accepted. A skin cannot set text colours, so pair a dark skin with the Dark theme.
+
+A skin package uses the shared fixed-object contract:
+
+```text
+global-background.png   128 × 140   tiled global row surface
+global-avatar.png       124 × 124   global identity
+global-volume.png      48 × 48     repeated active volume segment
+volume-background.png  520 × 60    volume control surface
+global-mute.png        108 × 108   global mute control
+program-background.png 128 × 90    tiled Program row surface
+program-icon.png       84 × 84     shared Program icon
+program-volume.png     48 × 48     repeated active volume segment
+program-mute.png       68 × 68     shared Program mute control
+connector.png          128 × 90     tiled connector texture
+termination.png        756 × 42     one final stack endpoint
+```
+
+The skin editor generates the blank PNG templates and exports the manifest contract. Program rows reuse the same shared Program assets; they are not separate Browser/Music/Game artwork slots.
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-If EarClarinet is useful to you, consider supporting its development:
-[ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
-
 > **Tip**: if the hotkey does not respond while a game or overlay runs as
-> administrator (e.g. League of Legends with Porofessor), launch EarClarinet as
+> administrator (e.g. League of Legends with Porofessor), launch DeckUPipes as
 > administrator too.
 
 ---
@@ -65,15 +93,15 @@ If EarClarinet is useful to you, consider supporting its development:
 # Español
 
 Un mezclador de volumen por aplicación para Windows. Pulsa un atajo y aparece
-un mezclador compacto en cualquier borde de la pantalla: ajusta el volumen de
-cada aplicación de forma independiente, silencia cualquier cosa con un clic y
-ve qué aplicación está reproduciendo audio.
+un mezclador compacto en la esquina superior izquierda o derecha de la pantalla:
+ajusta el volumen de cada aplicación de forma independiente, silencia cualquier
+cosa con un clic y ve qué aplicación está reproduciendo audio.
 
 ## Funciones
 
 - Volumen y silencio por aplicación vía Windows Core Audio API
-- Overlay en **8 posiciones**: columna vertical izquierda/derecha, o dock
-  horizontal arriba/abajo en izquierda, centro o derecha
+- Overlay anclado a la **esquina superior izquierda o derecha**, como una única
+  columna vertical
 - Fila de volumen del sistema con medidor de pico en vivo
 - Ciclo con Tab entre aplicaciones con pistas visuales (chips TAB / M, opcionales)
 - Atajo global configurable (por defecto `Ctrl+Alt+M`)
@@ -83,7 +111,7 @@ ve qué aplicación está reproduciendo audio.
 
 ## Uso
 
-1. Ejecuta EarClarinet (aparece el icono en la bandeja).
+1. Ejecuta DeckUPipes (aparece el icono en la bandeja).
 2. Pulsa `Ctrl+Alt+M` para mostrar/ocultar el mezclador en el monitor del cursor.
 3. Pasa el cursor por una barra y usa la **rueda del ratón**, **arrastra
    horizontalmente** o el teclado.
@@ -101,14 +129,14 @@ ve qué aplicación está reproduciendo audio.
 ## Instalación
 
 Descarga el instalador de la última versión desde
-[Releases](https://github.com/gatacampestre/EarClarinet/releases) (o ejecuta el
+[Releases](https://github.com/gatacampestre/DeckUPipes/releases) (o ejecuta el
 exe portable). La compilación es autocontenida — no requiere el runtime de .NET.
 
 ## Compilar
 
 ```powershell
-dotnet build EarClarinet.slnx -c Release
-dotnet test tests/EarClarinet.Tests/EarClarinet.Tests.csproj -c Release
+dotnet build DeckUPipes.slnx -c Release
+dotnet test tests/DeckUPipes.Tests/DeckUPipes.Tests.csproj -c Release
 ```
 
 Requiere el SDK de .NET 10 en Windows 10/11.
@@ -117,9 +145,9 @@ Requiere el SDK de .NET 10 en Windows 10/11.
 
 MIT — ver [LICENSE](LICENSE).
 
-Si EarClarinet te resulta útil, considera apoyar su desarrollo:
-[ko-fi.com/gatacampestre](https://ko-fi.com/gatacampestre)
-
 > **Consejo**: si el atajo no responde mientras un juego o overlay corre como
-> administrador (p. ej. League of Legends con Porofesor), ejecuta EarClarinet
+> administrador (p. ej. League of Legends con Porofesor), ejecuta DeckUPipes
 > también como administrador.
+
+
+

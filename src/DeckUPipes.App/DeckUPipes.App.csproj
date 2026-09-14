@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeckUPipes.Core\DeckUPipes.Core.csproj" />
+    <ProjectReference Include="..\DeckUPipes.Interop\DeckUPipes.Interop.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\deckupipes.png" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\deckupipes.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!--
+    Version is derived from the nearest git tag (e.g. v0.1.2 -> 0.1.2, or
+    0.1.2-dev when there are commits past the tag). Single source of truth:
+    About/Settings read the assembly version, so nothing needs a manual bump.
+  -->
+  <Target Name="SetVersionFromGit" BeforeTargets="PrepareForBuild">
+    <Exec Command="git describe --tags --abbrev=0 --always" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="Low" Condition="'$(LastGitTag)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="LastGitTag" />
+    </Exec>
+    <Exec Command="git describe --tags --long --always" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="Low" Condition="'$(GitDescribeLong)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitDescribeLong" />
+    </Exec>
+    <PropertyGroup Condition="'$(LastGitTag)' != '' and '$(GitDescribeLong)' != '$(LastGitTag)'">
+      <VersionSuffix>-dev</VersionSuffix>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(LastGitTag)' != ''">
+      <Version>$(LastGitTag.TrimStart('v'))$(VersionSuffix)</Version>
+    </PropertyGroup>
+  </Target>
+
+</Project>
+
