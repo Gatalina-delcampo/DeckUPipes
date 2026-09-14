@@ -1,0 +1,71 @@
+﻿{
+    "slots":  {
+                  "globalBackground":  {
+                                           "repeat":  "tile",
+                                           "width":  128,
+                                           "asset":  "global-background.png",
+                                           "height":  140
+                                       },
+                  "avatar":  {
+                                 "width":  124,
+                                 "asset":  "avatar.png",
+                                 "height":  124
+                             },
+                  "globalVolume":  {
+                                       "width":  48,
+                                       "asset":  "global-volume.png",
+                                       "height":  48,
+                                       "repeatCount":  10
+                                   },
+                  "volumeBackground":  {
+                                           "width":  520,
+                                           "asset":  "volume-background.png",
+                                           "height":  60
+                                       },
+                  "globalMute":  {
+                                     "width":  108,
+                                     "asset":  "global-mute.png",
+                                     "height":  108
+                                 },
+                  "programBackground":  {
+                                            "repeat":  "tile",
+                                            "width":  128,
+                                            "asset":  "program-background.png",
+                                            "height":  90
+                                        },
+                  "programIcon":  {
+                                      "width":  84,
+                                      "asset":  "program-icon.png",
+                                      "height":  84
+                                  },
+                  "programVolume":  {
+                                        "width":  48,
+                                        "asset":  "program-volume.png",
+                                        "height":  48,
+                                        "repeatCount":  10
+                                    },
+                  "programMute":  {
+                                      "width":  68,
+                                      "asset":  "program-mute.png",
+                                      "height":  68
+                                  },
+                  "connector":  {
+                                    "repeat":  "tile",
+                                    "width":  128,
+                                    "asset":  "connector.png",
+                                    "height":  90
+                                },
+                  "termination":  {
+                                      "once":  true,
+                                      "width":  756,
+                                      "asset":  "termination.png",
+                                      "height":  42
+                                  }
+              },
+    "format":  "earclarinet-skin",
+    "version":  1,
+    "programs":  [
+
+                 ],
+    "id":  "pastel-grid"
+}
