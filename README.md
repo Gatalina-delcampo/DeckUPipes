@@ -36,7 +36,7 @@ independently, mute anything with one click, and see which app is playing audio.
 ## Install
 
 Download the latest installer from
-[Releases](https://github.com/gatacampestre/DeckUPipes/releases) (or run the
+[Releases](https://github.com/Gatalina-delcampo/DeckUPipes/releases) (or run the
 portable exe). The build is self-contained — no .NET runtime needed.
 
 ## Building
@@ -56,7 +56,7 @@ DeckUPipes looks for per-user skin packages under:
 %APPDATA%\DeckUPipes\skins\<skin-id>\skin.json
 ```
 
-It also reads legacy packages from `%APPDATA%\DeckUPipes\skins` during migration. Select a discovered skin from **Settings > Skin**. If the selected package is missing or invalid, DeckUPipes keeps using the built-in theme and reports the fallback in Settings.
+It also reads legacy packages from `%APPDATA%\EarClarinet\skins` during migration. Select a discovered skin from **Settings > Skin**. If the selected package is missing or invalid, DeckUPipes keeps using the built-in theme and reports the fallback in Settings.
 
 Install a skin from **Settings > Skin**: press **Load skin...** and pick a `.zip` package, or **Folder...** for an unpacked folder - or drag either one onto the window. A card shows the skin id, how many objects were found and every problem it found before anything is copied; **Install skin** (or **Replace**) then switches the overlay to it immediately, with no restart. **Remove...** deletes an installed skin.
 
@@ -71,7 +71,7 @@ global-volume.png      48 × 48     repeated active volume segment
 volume-background.png  520 × 60    volume control surface
 global-mute.png        108 × 108   global mute control
 program-background.png 128 × 90    tiled Program row surface
-program-icon.png       84 × 84     shared Program icon
+program-icon.png       84 × 84     frame drawn behind the real app icon
 program-volume.png     48 × 48     repeated active volume segment
 program-mute.png       68 × 68     shared Program mute control
 connector.png          128 × 90     tiled connector texture
@@ -129,7 +129,7 @@ cosa con un clic y ve qué aplicación está reproduciendo audio.
 ## Instalación
 
 Descarga el instalador de la última versión desde
-[Releases](https://github.com/gatacampestre/DeckUPipes/releases) (o ejecuta el
+[Releases](https://github.com/Gatalina-delcampo/DeckUPipes/releases) (o ejecuta el
 exe portable). La compilación es autocontenida — no requiere el runtime de .NET.
 
 ## Compilar
