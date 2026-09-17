@@ -91,6 +91,8 @@ public partial class SettingsWindow : Window
             MonitorsCombo.IsEnabled = settings.MonitorMode == MonitorSelection.Fixed;
             // Reflect what Windows will actually do, not just the stored preference.
             LaunchAtStartupCheck.IsChecked = AutoStartService.IsEnabled();
+            ModernUiRadio.IsChecked = settings.UiMode == UiMode.Modern;
+            LegacyUiRadio.IsChecked = settings.UiMode == UiMode.Legacy;
 
             DarkThemeRadio.IsChecked = settings.Theme == Theme.Dark;
             LightThemeRadio.IsChecked = settings.Theme == Theme.Light;
@@ -367,6 +369,16 @@ public partial class SettingsWindow : Window
         }
 
         _store.Update(s => s.MonitorIndex = MonitorsCombo.SelectedIndex);
+    }
+
+    private void OnUiModeChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        _store.Update(s => s.UiMode = LegacyUiRadio.IsChecked == true ? UiMode.Legacy : UiMode.Modern);
     }
 
     private void OnLaunchAtStartupChanged(object sender, RoutedEventArgs e)

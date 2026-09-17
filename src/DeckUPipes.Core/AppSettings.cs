@@ -24,6 +24,13 @@ public enum Theme
     Light,
 }
 
+/// <summary>Which overlay to show: the current one, or the original classic look.</summary>
+public enum UiMode
+{
+    Modern,
+    Legacy,
+}
+
 public sealed class AppSettings
 {
     public const string DefaultAccentHex = "#FF4EC9B0";
@@ -31,6 +38,8 @@ public sealed class AppSettings
     public string Hotkey { get; set; } = "Control+Alt+M";
 
     public OverlaySide Side { get; set; } = OverlaySide.TopLeft;
+
+    public UiMode UiMode { get; set; } = UiMode.Modern;
 
     public int EdgeOffset { get; set; } = 12;
 

@@ -319,6 +319,19 @@
                 <RadioButton x:Name="SideTopRight" Content="Top right" GroupName="Side" Tag="TopRight" Checked="OnSideChanged" Foreground="{DynamicResource TextBrush}" Margin="24,0,0,0" />
             </StackPanel>
 
+            <TextBlock Text="Interface"
+                       FontWeight="SemiBold"
+                       Margin="0,12,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <RadioButton x:Name="ModernUiRadio" Content="Modern" GroupName="UiMode" Checked="OnUiModeChanged" Foreground="{DynamicResource TextBrush}" />
+                <RadioButton x:Name="LegacyUiRadio" Content="Classic (original look)" GroupName="UiMode" Checked="OnUiModeChanged" Foreground="{DynamicResource TextBrush}" Margin="24,0,0,0" />
+            </StackPanel>
+            <TextBlock Text="The classic look is the original compact overlay: continuous volume bars, shortcut chips, and no skins."
+                       FontSize="11"
+                       Foreground="{DynamicResource DimTextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,4" />
+
             <TextBlock Text="Distance from screen edge"
                        FontWeight="SemiBold"
                        Margin="0,10,0,2" />

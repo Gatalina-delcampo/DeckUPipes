@@ -13,7 +13,9 @@ public partial class App : System.Windows.Application
     private string _registeredHotkeySpec = string.Empty;
     private bool _lastAutostart;
     private TrayIcon _trayIcon = null!;
-    private OverlayWindow _overlayWindow = null!;
+    private IOverlayHost _overlay = null!;
+    private OverlayWindow? _modernOverlay;
+    private UiMode _overlayMode = UiMode.Modern;
     private SettingsWindow? _settingsWindow;
     private AboutWindow? _aboutWindow;
     private readonly SkinCatalog _skinCatalog = new();
@@ -52,8 +54,13 @@ public partial class App : System.Windows.Application
 
         _audioService = new AudioSessionService();
         _systemAudio = new SystemAudioController();
-        _overlayWindow = new OverlayWindow(_settingsStore.Settings, _audioService, _systemAudio);
-        _overlayWindow.ApplySkin(_skinAssetLoader);
+        var smoke = e.Args.Any(a => a.Equals("--smoke-test", StringComparison.OrdinalIgnoreCase));
+        CreateOverlay(smoke);
+
+        // Subscribe before starting the audio: the first poll reports the real
+        // endpoint volume, and a handler attached afterwards would miss it, leaving
+        // the SYSTEM bar empty until the volume happened to change.
+        _systemAudio.StateChanged += (_, _) => Dispatcher.Invoke(UpdateSystemOverlay);
 
         try
         {
@@ -68,7 +75,6 @@ public partial class App : System.Windows.Application
 
         ReRegisterHotkey();
 
-        _systemAudio.StateChanged += (_, _) => Dispatcher.Invoke(UpdateSystemOverlay);
         _settingsStore.SettingsChanged += OnSettingsChanged;
 
         _registeredHotkeySpec = _settingsStore.Settings.Hotkey;
@@ -76,14 +82,13 @@ public partial class App : System.Windows.Application
 
         // First run: tell the user the app is alive and guide them to the
         // configuration (hotkey, position, theme).
-        var smoke = e.Args.Any(a => a.Equals("--smoke-test", StringComparison.OrdinalIgnoreCase));
         if (_settingsStore.IsFirstRun && !smoke)
         {
             _trayIcon.ShowBalloon("DeckUPipes is running", "Configure your hotkey and preferences.");
             OnSettingsRequested();
         }
 
-        _overlayWindow.Reposition();
+        _overlay.Reposition();
 
         if (smoke)
         {
@@ -94,8 +99,14 @@ public partial class App : System.Windows.Application
     private void OnSettingsChanged(object? sender, EventArgs e)
     {
         ThemeManager.Apply(_settingsStore.Settings, Resources);
+
+        if (_settingsStore.Settings.UiMode != _overlayMode)
+        {
+            RecreateOverlay();
+        }
+
         LoadSkin(_settingsStore.Settings.SkinId);
-        _overlayWindow.ApplySettings();
+        _overlay.ApplySettings();
 
         var settings = _settingsStore.Settings;
         if (!string.Equals(_registeredHotkeySpec, settings.Hotkey, StringComparison.Ordinal))
@@ -123,10 +134,45 @@ public partial class App : System.Windows.Application
             ? null
             : _skinCatalog.Discover().FirstOrDefault(item => string.Equals(item.Manifest.Id, skinId, StringComparison.OrdinalIgnoreCase));
         _skinAssetLoader.Load(package);
-        if (_overlayWindow is not null)
+        _modernOverlay?.ApplySkin(_skinAssetLoader);
+    }
+
+    /// <summary>
+    /// Builds the overlay the settings ask for. The smoke test always gets the
+    /// modern one: its self-tests are what CI checks, and the classic overlay has
+    /// none.
+    /// </summary>
+    private void CreateOverlay(bool smoke)
+    {
+        if (!smoke && _settingsStore.Settings.UiMode == UiMode.Legacy)
         {
-            _overlayWindow.ApplySkin(_skinAssetLoader);
+            _modernOverlay = null;
+            _overlay = new LegacyOverlayWindow(_settingsStore.Settings, _audioService, _systemAudio);
         }
+        else
+        {
+            var modern = new OverlayWindow(_settingsStore.Settings, _audioService, _systemAudio);
+            modern.ApplySkin(_skinAssetLoader);
+            _modernOverlay = modern;
+            _overlay = modern;
+        }
+
+        _overlayMode = smoke ? UiMode.Modern : _settingsStore.Settings.UiMode;
+        _overlay.ApplySettings();
+        _overlay.RefreshSessions(_audioService.Sessions);
+        _overlay.UpdateSystemVolume(_systemAudio.Volume, _systemAudio.IsMuted, _systemAudio.Peak);
+    }
+
+    /// <summary>Swaps overlays when the interface mode changes, without a restart.</summary>
+    private void RecreateOverlay()
+    {
+        if (_overlay is Window window)
+        {
+            window.Hide();
+            window.Close();
+        }
+
+        CreateOverlay(smoke: false);
     }
 
     private void ReRegisterHotkey()
@@ -154,25 +200,26 @@ public partial class App : System.Windows.Application
     }
 
     private void OnSessionsChanged(object? sender, EventArgs e) =>
-        Dispatcher.Invoke(() => _overlayWindow.RefreshSessions(_audioService.Sessions));
+        Dispatcher.Invoke(() => _overlay.RefreshSessions(_audioService.Sessions));
 
     private void UpdateSystemOverlay() =>
-        _overlayWindow.UpdateSystemVolume(_systemAudio.Volume, _systemAudio.IsMuted, _systemAudio.Peak);
+        _overlay.UpdateSystemVolume(_systemAudio.Volume, _systemAudio.IsMuted, _systemAudio.Peak);
 
     private void RunSmokeTest()
     {
         var results = new List<(string Name, bool Passed)>();
 
-        _overlayWindow.Show();
+        var overlay = _modernOverlay!;
+        overlay.Show();
 
         // Self-test: the overlay must hide and reopen cleanly.
-        results.Add(("VisibilityCycle", _overlayWindow.SelfTestVisibilityCycle()));
-        _overlayWindow.Show();
+        results.Add(("VisibilityCycle", overlay.SelfTestVisibilityCycle()));
+        overlay.Show();
 
         // Self-test: dock geometry, SYSTEM mute visual, SYSTEM row input.
-        results.Add(("DockGeometry", _overlayWindow.SelfTestDockGeometry()));
-        results.Add(("SystemMuteVisual", _overlayWindow.SelfTestSystemMuteVisual()));
-        results.Add(("SystemRowInput", _overlayWindow.SelfTestSystemRowInput()));
+        results.Add(("DockGeometry", overlay.SelfTestDockGeometry()));
+        results.Add(("SystemMuteVisual", overlay.SelfTestSystemMuteVisual()));
+        results.Add(("SystemRowInput", overlay.SelfTestSystemRowInput()));
 
         foreach (var (name, passed) in results)
         {
@@ -245,9 +292,9 @@ public partial class App : System.Windows.Application
         }
     }
 
-    private void OnHotkeyPressed() => Dispatcher.Invoke(_overlayWindow.Toggle);
+    private void OnHotkeyPressed() => Dispatcher.Invoke(_overlay.Toggle);
 
-    private void OnToggleMixerRequested() => _overlayWindow.Toggle();
+    private void OnToggleMixerRequested() => _overlay.Toggle();
 
     private void OnSettingsRequested()
     {

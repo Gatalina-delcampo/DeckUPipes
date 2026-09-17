@@ -17,6 +17,8 @@ public sealed class SessionViewModel : INotifyPropertyChanged
 
     private readonly AudioSession _session;
     private bool _isFocused;
+    private bool _isNextTabTarget;
+    private bool _shortcutHintsEnabled;
 
     public SessionViewModel(AudioSession session)
     {
@@ -83,8 +85,45 @@ public sealed class SessionViewModel : INotifyPropertyChanged
 
             _isFocused = value;
             RaisePropertyChanged(nameof(IsFocused));
+            RaisePropertyChanged(nameof(IsMuteHint));
         }
     }
+
+    /// <summary>True when this row is the next Tab target. Driven by the classic overlay.</summary>
+    public bool IsNextTabTarget
+    {
+        get => _isNextTabTarget;
+        set
+        {
+            if (_isNextTabTarget == value)
+            {
+                return;
+            }
+
+            _isNextTabTarget = value;
+            RaisePropertyChanged(nameof(IsNextTabTarget));
+        }
+    }
+
+    /// <summary>Mirror of the shortcut-hint switch, pushed in by the classic overlay.</summary>
+    public bool ShortcutHintsEnabled
+    {
+        get => _shortcutHintsEnabled;
+        set
+        {
+            if (_shortcutHintsEnabled == value)
+            {
+                return;
+            }
+
+            _shortcutHintsEnabled = value;
+            RaisePropertyChanged(nameof(ShortcutHintsEnabled));
+            RaisePropertyChanged(nameof(IsMuteHint));
+        }
+    }
+
+    /// <summary>True when the focused row should show its mute hint chip.</summary>
+    public bool IsMuteHint => _shortcutHintsEnabled && _isFocused;
 
     private void OnSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

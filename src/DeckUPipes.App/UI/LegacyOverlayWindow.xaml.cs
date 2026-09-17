@@ -16,24 +16,19 @@ using Brush = System.Windows.Media.Brush;
 namespace DeckUPipes.App.UI;
 
 /// <summary>
-/// The always-on-top overlay: a main panel with the header + SYSTEM row, and
-/// floating per-app boxes below it. Focus model: SYSTEM is app index -1, apps
-/// are 0..n-1; Tab/click/wheel cycle the focus and the TAB chip marks the next
-/// target (see CycleLogic).
+/// The original EarClarinet overlay, kept as an optional look. A 340px column with
+/// a compact header, an inline SYSTEM row whose volume is a continuous fill with a
+/// peak bar behind it, and app rows built the same way. It ignores skins - the
+/// built-in theme and the accent colour are all it uses - and it anchors to the
+/// top-left or top-right only, since the old horizontal dock is gone.
 /// </summary>
-public partial class OverlayWindow : Window, IOverlayHost
+public partial class LegacyOverlayWindow : Window, IOverlayHost
 {
-    private const double PanelWidth = 840;
-    private const double GlobalRowHeight = 144;
-    private const double ProgramRowHeight = 90;
-    private const double ConnectorTopLead = 30;
-    private const double ConnectorBottomLead = 18;
-    private const double TerminationHeight = 42;
+    private const double PanelWidth = 340;
     private const double VerticalMargin = 24;
     private const double ScrollChromeHeight = 110;
     private const double WheelVolumeStep = 0.03;
-    private const double VolumeLaneWidth = 520;
-    private const double DragVolumePerPixel = 1.0 / (VolumeLaneWidth * 2.0);
+    private const double DragVolumePerPixel = 0.006;
     private const double KeyVolumeStep = 0.05;
     private const double FineVolumeStep = 0.01;
 
@@ -45,9 +40,6 @@ public partial class OverlayWindow : Window, IOverlayHost
     private bool _hasOpenedOnce;
     private int _focusedIndex = CycleLogic.SystemAppIndex;
     private bool _repositioning;
-    private SkinAssetLoader? _skinAssets;
-    private double _systemVolume;
-    private bool _systemMuted;
 
     // Drag state (left-button drag on a bar adjusts volume horizontally).
     private SessionViewModel? _dragSession;
@@ -57,19 +49,22 @@ public partial class OverlayWindow : Window, IOverlayHost
     private double _dragStartVolume;
     private bool _dragMoved;
 
-    public OverlayWindow(AppSettings settings, AudioSessionService audioService, SystemAudioController systemAudio)
+    public LegacyOverlayWindow(AppSettings settings, AudioSessionService audioService, SystemAudioController systemAudio)
     {
         InitializeComponent();
         _settings = settings;
         _audioService = audioService;
         _systemAudio = systemAudio;
 
+        HeaderLogo.Source = LogoService.GetBitmapSource();
+        HeaderLogo.Visibility = HeaderLogo.Source is null ? Visibility.Collapsed : Visibility.Visible;
+
         Resources["DimOpacity"] = settings.DimOpacity;
         SessionScroll.MaxHeight = 0;
         EmptyState.Visibility = Visibility.Visible;
 
-        // The overlay is always a vertical column anchored to the top edge, so
-        // re-anchor whenever its size changes while visible.
+        // The dock's height depends on content, so re-anchor whenever sessions
+        // change the size while it is visible.
         SizeChanged += (_, _) =>
         {
             if (IsVisible && !_repositioning)
@@ -79,59 +74,18 @@ public partial class OverlayWindow : Window, IOverlayHost
         };
     }
 
-    public void ApplySkin(SkinAssetLoader skinAssets)
-    {
-        _skinAssets = skinAssets;
-        MasterAvatarImage.Source = skinAssets.Get("avatar");
-        MasterMuteImage.Source = skinAssets.Get("globalMute");
-        MasterMuteImage.Visibility = MasterMuteImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
-        MasterMuteFallback.Visibility = MasterMuteImage.Source is null ? Visibility.Visible : Visibility.Collapsed;
-        ApplySkinResources();
-        ApplySkinToRows();
-        UpdateSystemSegments();
-    }
-
-    private void ApplySkinResources()
-    {
-        var appResources = System.Windows.Application.Current.Resources;
-        Resources["SkinGlobalBackgroundBrush"] = _skinAssets?.GetTileBrush("globalBackground") ?? appResources["PanelBrush"];
-        Resources["SkinProgramBackgroundBrush"] = _skinAssets?.GetTileBrush("programBackground") ?? appResources["AppBoxBrush"];
-        Resources["SkinConnectorBrush"] = _skinAssets?.GetTileBrush("connector") ?? appResources["PanelBrush"];
-        Resources["SkinTerminationBrush"] = _skinAssets?.GetTileBrush("termination") ?? appResources["PanelBrush"];
-        Resources["SkinVolumeBackgroundBrush"] = _skinAssets?.GetTileBrush("volumeBackground") ?? appResources["TrackBrush"];
-        Resources["SkinVolumeSegmentBrush"] = _skinAssets?.Get("globalVolume") is { } globalSegment
-            ? new ImageBrush(globalSegment) { Stretch = Stretch.Fill }
-            : appResources["AccentBrush"];
-        Resources["SkinProgramMuteImage"] = _skinAssets?.Get("programMute") ?? LogoService.GetBitmapSource();
-    }
-
-    private void ApplySkinToRows()
-    {
-        var icon = _skinAssets?.Get("programIcon");
-        var segment = _skinAssets?.Get("programVolume");
-        var mute = _skinAssets?.Get("programMute");
-        foreach (var vm in _viewModels)
-        {
-            vm.ApplySkinAssets(icon, segment, mute);
-        }
-    }
-
-    private void UpdateSystemSegments()
-    {
-        var segment = _skinAssets?.Get("globalVolume");
-        MasterVolumeSegments.ItemsSource = Enumerable.Range(0, 10)
-            .Select(index => new VolumeSegmentState(
-                index < Math.Ceiling(_systemVolume * 10) ? (_systemMuted ? 0.45 : 1.0) : 0.0,
-                segment))
-            .ToList();
-    }
-
     /// <summary>Applies settings that affect the overlay (opacities, hints, position, theme brushes).</summary>
     public void ApplySettings()
     {
         Resources["DimOpacity"] = _settings.DimOpacity;
+        foreach (var vm in _viewModels)
+        {
+            vm.ShortcutHintsEnabled = true;
+        }
+
         CloseHint.Text = $"close with {_settings.Hotkey}";
         Reposition();
+        RecomputeHints();
     }
 
     /// <summary>
@@ -161,13 +115,13 @@ public partial class OverlayWindow : Window, IOverlayHost
         _repositioning = true;
         try
         {
-            // Keep one vertical skin composition; Side only chooses its screen anchor.
             var offset = _settings.EdgeOffset;
+            var rightAnchor = _settings.Side == OverlaySide.TopRight;
+
             Width = PanelWidth;
             SessionScroll.MaxHeight = Math.Max(120, workDip.Height - (2 * VerticalMargin) - ScrollChromeHeight);
             UpdateLayout();
 
-            var rightAnchor = _settings.Side == OverlaySide.TopRight;
             Left = rightAnchor ? workDip.Right - Width - offset : workDip.Left + offset;
             Top = workDip.Top + VerticalMargin;
 
@@ -185,16 +139,6 @@ public partial class OverlayWindow : Window, IOverlayHost
         if (IsVisible)
         {
             Hide();
-            return;
-        }
-
-        ShowMixer();
-    }
-
-    private void ShowMixer()
-    {
-        if (IsVisible)
-        {
             return;
         }
 
@@ -221,15 +165,32 @@ public partial class OverlayWindow : Window, IOverlayHost
         };
         BeginAnimation(OpacityProperty, fade);
 
-        // Slide in from the anchored edge without changing the layout.
-        var slideFromX = _settings.Side == OverlaySide.TopRight ? -18.0 : 18.0;
-        var slide = new DoubleAnimation(slideFromX, 0.0, duration) { EasingFunction = ease };
-        slide.Completed += (_, _) =>
+        // Slide in from the anchored edge: sideways from the edge it hangs on, and
+        // down from the top, as the original did.
+        double slideFromX = _settings.Side == OverlaySide.TopRight ? -18 : 18;
+        const double slideFromY = -18;
+
+        if (slideFromY != 0)
         {
-            OverlaySlide.BeginAnimation(TranslateTransform.XProperty, null);
-            OverlaySlide.X = 0;
-        };
-        OverlaySlide.BeginAnimation(TranslateTransform.XProperty, slide);
+            var rise = new DoubleAnimation(slideFromY, 0.0, duration) { EasingFunction = ease };
+            rise.Completed += (_, _) =>
+            {
+                OverlaySlide.BeginAnimation(TranslateTransform.YProperty, null);
+                OverlaySlide.Y = 0;
+            };
+            OverlaySlide.BeginAnimation(TranslateTransform.YProperty, rise);
+        }
+
+        if (slideFromX != 0)
+        {
+            var slide = new DoubleAnimation(slideFromX, 0.0, duration) { EasingFunction = ease };
+            slide.Completed += (_, _) =>
+            {
+                OverlaySlide.BeginAnimation(TranslateTransform.XProperty, null);
+                OverlaySlide.X = 0;
+            };
+            OverlaySlide.BeginAnimation(TranslateTransform.XProperty, slide);
+        }
     }
 
     /// <summary>Rebuilds the view model list from the audio service.</summary>
@@ -242,12 +203,9 @@ public partial class OverlayWindow : Window, IOverlayHost
 
         _viewModels.Clear();
         _viewModels.AddRange(sessions.Select(s => new SessionViewModel(s)));
-        var programIcon = _skinAssets?.Get("programIcon");
-        var programSegment = _skinAssets?.Get("programVolume");
-        var programMute = _skinAssets?.Get("programMute");
         foreach (var vm in _viewModels)
         {
-            vm.ApplySkinAssets(programIcon, programSegment, programMute);
+            vm.ShortcutHintsEnabled = true;
         }
 
         // Keep the focus on the same session (or fall back to the first app).
@@ -280,87 +238,50 @@ public partial class OverlayWindow : Window, IOverlayHost
         var empty = _viewModels.Count == 0;
         EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         SessionList.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
-        UpdateProgramStackGeometry();
 
         ApplyFocus(newIndex);
     }
 
-    private void UpdateProgramStackGeometry()
-    {
-        var rowCount = _viewModels.Count;
-        var connectorHeight = ConnectorTopLead + (rowCount * ProgramRowHeight) + ConnectorBottomLead;
-        ConnectorSurface.Height = connectorHeight;
-        TerminationSurface.Visibility = rowCount == 0 ? Visibility.Collapsed : Visibility.Visible;
-        ProgramStackSurface.UpdateLayout();
-    }
-
     public void UpdateSystemVolume(double volume, bool isMuted, float peak)
     {
-        _systemVolume = Math.Clamp(volume, 0.0, 1.0);
-        _systemMuted = isMuted;
+        var volumeBrush = isMuted
+            ? (Brush)FindResource("MuteBrush")
+            : (Brush)FindResource("AccentBrush");
         var labelBrush = isMuted
             ? (Brush)FindResource("MuteBrush")
             : (Brush)FindResource("DimTextBrush");
 
+        MasterVolumeScale.ScaleX = Math.Clamp(volume, 0.0, 1.0);
+        MasterPeakScale.ScaleX = Math.Clamp(peak, 0.0, 1.0);
         MasterVolumeText.Text = $"{Math.Round(volume * 100)}%";
         MasterLabel.Foreground = labelBrush;
-        MasterMuteFallback.Opacity = isMuted ? 0.65 : 0.35;
-        UpdateSystemSegments();
+        // The SYSTEM row mutes too: show it like an app box would.
+        MasterVolumeFill.Background = volumeBrush;
     }
 
-    /// <summary>
-    /// Verifies the overlay hides and reopens cleanly: a closed WPF window
-    /// cannot be shown again, so reopening it from the tray or the hotkey must
-    /// not crash. Used by the smoke test.
-    /// </summary>
-    public bool SelfTestVisibilityCycle()
+    /// <summary>Raises a real mouse-down through the close button; used by the smoke test.</summary>
+    public bool SelfTestCloseButton()
     {
-        Hide();
-        var hidden = !IsVisible;
-        ShowMixer();
-        return hidden && IsVisible;
-    }
-
-    /// <summary>
-    /// Verifies the SYSTEM row accepts mouse input: it must be hit-testable, or
-    /// its wheel/drag/click handlers never run. Used by the smoke test.
-    /// </summary>
-    public bool SelfTestSystemRowInput()
-    {
-        var centre = SystemRowInline.TransformToAncestor(this).Transform(new Point(420, 72));
-        return InputHitTest(centre) is DependencyObject node && IsWithin(node, SystemRowInline);
-    }
-
-    private static bool IsWithin(DependencyObject node, DependencyObject ancestor)
-    {
-        var current = node;
-        while (current is not null)
+        var args = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
         {
-            if (ReferenceEquals(current, ancestor))
-            {
-                return true;
-            }
-
-            current = VisualTreeHelper.GetParent(current);
-        }
-
-        return false;
+            RoutedEvent = UIElement.MouseDownEvent,
+            Source = CloseButton,
+        };
+        CloseButton.RaiseEvent(args);
+        return !IsVisible;
     }
 
     /// <summary>
-    /// Verifies the overlay geometry for a top-right placement: anchored to the
-    /// top edge, using the fixed vertical-column width, and on-screen. Used by
-    /// the smoke test.
+    /// Verifies the legacy column's geometry: the fixed width, a height that fits
+    /// the screen, and an on-screen anchor. Mirrors the modern overlay's check.
     /// </summary>
-    public bool SelfTestDockGeometry()
+    public bool SelfTestGeometry()
     {
         var original = _settings.Side;
         try
         {
             _settings.Side = OverlaySide.TopRight;
             Reposition();
-            // Vertical column: fixed width, anchored to the top edge so its
-            // height stays small relative to a full-height dock.
             var columnWidth = Math.Abs(ActualWidth - PanelWidth) < 1;
             var compact = ActualHeight < SystemParameters.WorkArea.Height;
             var onScreen = Left >= 0 && Top >= 0;
@@ -380,14 +301,14 @@ public partial class OverlayWindow : Window, IOverlayHost
     /// </summary>
     public bool SelfTestSystemMuteVisual()
     {
-        var normal = MasterMuteFallback.Opacity;
+        var normal = MasterVolumeFill.Background;
         _systemAudio.SetMute(true);
         try
         {
             var deadline = Environment.TickCount64 + 3000;
             while (Environment.TickCount64 < deadline)
             {
-                if (MasterMuteFallback.Opacity != normal)
+                if (!ReferenceEquals(MasterVolumeFill.Background, normal))
                 {
                     return true;
                 }
@@ -436,6 +357,7 @@ public partial class OverlayWindow : Window, IOverlayHost
             }
         }
 
+        RecomputeHints();
     }
 
     /// <summary>Brief side-to-side "settle" animation when something gains focus.</summary>
@@ -452,6 +374,23 @@ public partial class OverlayWindow : Window, IOverlayHost
         Storyboard.SetTargetProperty(animation, new PropertyPath(TranslateTransform.XProperty));
         storyboard.Children.Add(animation);
         storyboard.Begin();
+    }
+
+    /// <summary>Refreshes the TAB chips (app boxes + SYSTEM row) and ESC chips.</summary>
+    private void RecomputeHints()
+    {
+        var appCount = _viewModels.Count;
+        var tabTarget = CycleLogic.NextTabTargetAppIndex(_focusedIndex, appCount);
+        var systemIsNext = tabTarget is null;
+
+        SystemTabChip.Visibility = systemIsNext
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        for (var i = 0; i < appCount; i++)
+        {
+            _viewModels[i].IsNextTabTarget = i == tabTarget;
+        }
     }
 
     private void CycleFocus(int direction)
@@ -487,9 +426,13 @@ public partial class OverlayWindow : Window, IOverlayHost
             return;
         }
 
-        // The overlay is a vertical column; wheel over empty space cycles focus.
         CycleFocus(e.Delta > 0 ? -1 : 1);
         e.Handled = true;
+    }
+
+    private void OnCloseClicked(object sender, MouseButtonEventArgs e)
+    {
+        Hide();
     }
 
     private void OnSessionListMouseWheel(object sender, MouseWheelEventArgs e)
@@ -704,4 +647,3 @@ public partial class OverlayWindow : Window, IOverlayHost
         }
     }
 }
-
